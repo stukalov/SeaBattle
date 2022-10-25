@@ -97,11 +97,11 @@ class Ship:
                 raise ShipException('С этим кораблем в соседних клетках есть другой корабль')
 
     def hit(self, cell):
-        for i, item in enumerate(self.cells):
-            if item == cell:
-                self.__hits[i] = True
-                return True
-        return False
+        try:
+            self.__hits[self.__cells.index(cell)] = True
+            return True
+        except ValueError:
+            return False
 
 
 class ShipList(list):
