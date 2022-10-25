@@ -33,39 +33,29 @@ class Ship:
     TYPE_HORIZONTAL = 0
     TYPE_VERTICAL = 1
 
-    def __init__(self, size, type):
-        '''
+    def __init__(self, size, t):
+        """
         :param size: размер в клетках 1, 2 или 3
-        :param type: 0 - горизонтальный, 1 - вертикальный
-        '''
+        :param t: 0 - горизонтальный, 1 - вертикальный
+        """
         self.__size = size
-        if type in [0, 1]:
-            self.__type = type
+        if t in [0, 1]:
+            self.__type = t
         else:
             raise ShipException('Указано неверный тип корабля')
-        self.__pos = None
         self.__cells = [None] * size
         self.__hits = [False] * size
 
     @property
-    def size(self):
-        return self.__size
-
-    @property
-    def type(self):
-        return self.__type
-
-    @property
     def pos(self):
-        return self.__pos
+        return self.__cells[0]
 
     @pos.setter
     def pos(self, value):
-        self.__pos = value
         i = 0
-        while i < self.size:
+        while i < self.__size:
             self.__cells[i] = value
-            value += Cell(0, 1) if self.type else Cell(1, 0)
+            value += Cell(0, 1) if self.__type else Cell(1, 0)
             i += 1
 
     @property
@@ -133,7 +123,7 @@ class Board:
         for ship in self.__ships:
             for cell in ship.cells:
                 # self.__field[СТРОКА][СТОЛБЕЦ]
-                self.__field[cell.y-1][cell.x-1] = self.CELL_SHIP
+                self.__field[cell.y - 1][cell.x - 1] = self.CELL_SHIP
 
     @staticmethod
     def width():
@@ -145,24 +135,24 @@ class Board:
 
     @staticmethod
     def ship_sizes():
-        return (3, 2, 2, 1, 1, 1, 1)
+        return 3, 2, 2, 1, 1, 1, 1
 
     def __str__(self):
-        str = '   |'
+        s = '   |'
         for x in range(self.width()):
-            str += f' {x+1} |'
-        out = [str]
+            s += f' {x + 1} |'
+        out = [s]
         for y in range(self.height()):
-            str = f' {y+1} |'
+            s = f' {y + 1} |'
             for x in range(self.width()):
                 # self.__field[СТРОКА][СТОЛБЕЦ]
-                str += f' {self.__field[y][x]} |'
-            out.append(str)
+                s += f' {self.__field[y][x]} |'
+            out.append(s)
         return '\n'.join(out) + '\n'
 
     def hit(self, cell):
         # self.__field[СТРОКА][СТОЛБЕЦ]
-        self.__field[cell.y-1][cell.x-1] = self.CELL_HIT if self.__ships.hit(cell) else self.CELL_NOT_HIT
+        self.__field[cell.y - 1][cell.x - 1] = self.CELL_HIT if self.__ships.hit(cell) else self.CELL_NOT_HIT
 
     @property
     def killed(self):
@@ -193,7 +183,7 @@ class Player:
 
     # Переопределяется в дочернем классе, Запрос хода игрока
     def make_hit(self):
-        pass
+        raise NotImplementedError()
 
     # Поле очень маленькое, не всегда удается рзместить случаныйм образом все корабли у четом ограничений
     def generate_board(self):
@@ -219,7 +209,7 @@ class Player:
 
     # Переопределяется в дочернем классе
     def get_ship_params(self, size):
-        pass
+        raise NotImplementedError()
 
     # Переопределяется в дочернем классе (Bot - не печатает ошибки, Human - печатает)
     def print_exception(self, e):
@@ -236,7 +226,6 @@ class Player:
     def play(self, enemy):
         enemy.board.hit(self.get_hit())
         return enemy.board.killed
-
 
 
 class BotPlayer(Player):
@@ -269,7 +258,7 @@ class HumanPlayer(Player):
             raise ValueError('Указано неверное количество координат.')
         try:
             x, y = list(map(int, xy))
-        except ValueError as e:
+        except ValueError:
             raise ValueError('Одна из координат не число.')
         if not 1 <= x <= self.board.width():
             raise ValueError(f'Координата X за пределами поля. Для X укажите от 1 до {self.board.width()}.')
@@ -290,16 +279,16 @@ class HumanPlayer(Player):
         xyt = self.input("Укажите координаты 'X', 'Y' его первой клетки" +
                          (" и 'Тип' корабля через пробел" if size > 1 else "") + ": ")
         if size == 1:
-            xyt.append(0)
+            xyt.append('0')
         if len(xyt) != 3:
             raise ValueError('Указано неверное количество параметров.')
         try:
             return list(map(int, xyt))
-        except ValueError as e:
+        except ValueError:
             raise ValueError('Один из параметров не число.')
 
     def print_exception(self, e):
-        print('\n', e, '\n')
+        print('\n' + str(e) + '\n')
 
     def print_ships(self, ships):
         print(Board(ships))
@@ -366,7 +355,7 @@ class GameLogic:
                 break
             except QuitGame:
                 break
-            except BaseException as e:
+            except:
                 print('Произошла ошибка\n')
                 break
 
